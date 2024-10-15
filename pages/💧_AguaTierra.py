@@ -22,6 +22,7 @@ import folium
 import warnings
 from shapely.geometry import Polygon
 
+from google.oauth2 import service_account  # Importar la biblioteca adecuada
 
 ######################################## INTERFAZ VISUAL
 st.set_page_config(layout="wide")
@@ -65,22 +66,28 @@ col1, col2 = st.columns([5,2])
 
 
 #################################### Lee las credenciales del archivo JSON LOCALMENTE
-service_account_info = os.getenv("GCP_SERVICE_ACCOUNT")
+# Obtener las credenciales desde las variables de entorno
+gcp_service_account = os.getenv('GCP_SERVICE_ACCOUNT')
 
-try:
-    if service_account_info:
-        service_account_dict = json.loads(service_account_info)
-        credentials = ee.ServiceAccountCredentials(None, key_data=service_account_dict)
+if gcp_service_account:
+    try:
+        # Cargar las credenciales con el alcance correcto
+        credentials = service_account.Credentials.from_service_account_info(
+            json.loads(gcp_service_account),
+            scopes=["https://www.googleapis.com/auth/earthengine"]
+        )
+        
+        # Inicializar Google Earth Engine con las credenciales
         ee.Initialize(credentials)
-        print("Credenciales cargadas correctamente")
-    else:
-        # Fallback si no hay credenciales en las variables de entorno
-        ee.Initialize()
-        print("Inicialización predeterminada sin credenciales")
-except json.JSONDecodeError as e:
-    print(f"Error decodificando JSON de las credenciales: {e}")
-except Exception as e:
-    print(f"Error inicializando Earth Engine rama pages: {e}")
+        st.success("GEE inicializado correctamente.")
+    except json.JSONDecodeError as e:
+        st.error(f"Error al decodificar el JSON: {e}")
+    except AttributeError as e:
+        st.error(f"Error de atributo: {e}")
+    except Exception as e:
+        st.error(f"Se produjo un error: {e}")
+else:
+    st.error("No se pudo encontrar la clave del servicio. Asegúrate de que esté configurada correctamente.")
 
 
 ################################## Mapa Base

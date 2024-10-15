@@ -10,6 +10,4 @@ leafmap
 pyogrio
 google-api-python-client
 google-auth
-google-auth-oauthlib
-google-cloud-storage  # Si estás usando Google Cloud Storage
 fiona
