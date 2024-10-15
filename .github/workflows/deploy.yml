@@ -1,8 +1,9 @@
-name: CI
+name: deploy
 
 on:
   push:
     branches:
+      - main
       - gh-pages  # Cambia esto si tienes una rama diferente
   pull_request:
 
