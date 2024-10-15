@@ -65,6 +65,7 @@ data = st.file_uploader(
 col1, col2 = st.columns([5,2]) 
 
 
+
 #################################### Lee las credenciales del archivo JSON LOCALMENTE
 # Obtener las credenciales desde las variables de entorno
 gcp_service_account = os.getenv('GCP_SERVICE_ACCOUNT')
@@ -90,7 +91,8 @@ else:
     st.error("No se pudo encontrar la clave del servicio. Asegúrate de que esté configurada correctamente.")
 
 
-################################## Mapa Base
+
+################################## Mapa Basee
 Map = geemap.Map(
             basemap="HYBRID",
             plugin_Draw=True,
