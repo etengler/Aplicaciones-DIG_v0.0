@@ -1,31 +1,41 @@
-name: Deploy to GitHub Pages
+name: CI
 
 on:
   push:
     branches:
-      - main  # Se ejecuta cuando hay un push en la rama main
-      - gh-pages  # También puedes agregar esta línea si deseas que se ejecute en la rama gh-pages
+      - main  # Cambia esto si tienes una rama diferente
+  pull_request:
 
 jobs:
-  deploy:
+  lint:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check out code
+      - name: Checkout code
         uses: actions/checkout@v2
 
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: '3.11.9'
+          python-version: '3.12.6'  # Cambia según tu versión de Python
 
-      - name: Install dependencies
+      - name: Install pre-commit
         run: |
-          pip install -r requirements.txt
+          pip install pre-commit
+          pre-commit install
 
-      - name: Set environment variable for GCP service account
-        run: echo "GCP_SERVICE_ACCOUNT=${{ secrets.GCP_SERVICE_ACCOUNT }}" >> $GITHUB_ENV
+      - name: Run pre-commit
+        run: pre-commit run --all-files
 
-      - name: Run Voilà app
+      - name: Set up environment for Streamlit
+        env:
+          GCP_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}  # Asegúrate de tener el secreto configurado
         run: |
-          voila AguaTierra.ipynb --no-browser --port=8888
+          echo "GCP_SERVICE_ACCOUNT=${GCP_SERVICE_ACCOUNT}" >> $GITHUB_ENV
+          pip install -r requirements.txt  # Asegúrate de tener un archivo requirements.txt
+
+      - name: Run Streamlit
+        run: streamlit run Home.py  # Cambia esto según tu archivo de Streamlit
+
+      - name: Print environment variables
+        run: env
