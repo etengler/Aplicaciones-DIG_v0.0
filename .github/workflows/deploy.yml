@@ -1,0 +1,31 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main  # Se ejecuta cuando hay un push en la rama main
+      - gh-pages  # También puedes agregar esta línea si deseas que se ejecute en la rama gh-pages
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.11.9'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Set environment variable for GCP service account
+        run: echo "GCP_SERVICE_ACCOUNT=${{ secrets.GCP_SERVICE_ACCOUNT }}" >> $GITHUB_ENV
+
+      - name: Run Voilà app
+        run: |
+          voila AguaTierra.ipynb --no-browser --port=8888

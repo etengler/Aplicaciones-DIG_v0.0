@@ -65,17 +65,22 @@ col1, col2 = st.columns([5,2])
 
 
 #################################### Lee las credenciales del archivo JSON LOCALMENTE
-ruta_archivo = "C:/Users/etengler/Downloads/ee-dig-aplicaciones-774222ef12fc.json"
-with open(ruta_archivo, 'r') as archivo_json:
-    credenciales = json.load(archivo_json)
+service_account_info = os.getenv("GCP_SERVICE_ACCOUNT")
 
-# Autenticación usando las credenciales en formato JSON
-credentials = ee.ServiceAccountCredentials(credenciales['client_email'], ruta_archivo)
 try:
-    ee.Initialize(credentials)
-    #st.write("Earth Engine se ha inicializado correctamente")
-except:
-    st.error("Error inicializando Earth Engine")
+    if service_account_info:
+        service_account_dict = json.loads(service_account_info)
+        credentials = ee.ServiceAccountCredentials(None, key_data=service_account_dict)
+        ee.Initialize(credentials)
+        print("Credenciales cargadas correctamente")
+    else:
+        # Fallback si no hay credenciales en las variables de entorno
+        ee.Initialize()
+        print("Inicialización predeterminada sin credenciales")
+except json.JSONDecodeError as e:
+    print(f"Error decodificando JSON de las credenciales: {e}")
+except Exception as e:
+    print(f"Error inicializando Earth Engine rama pages: {e}")
 
 
 ################################## Mapa Base
