@@ -3,7 +3,7 @@ name: CI
 on:
   push:
     branches:
-      - main  # Cambia esto si tienes una rama diferente
+      - gh-pages  # Cambia esto si tienes una rama diferente
   pull_request:
 
 jobs:
