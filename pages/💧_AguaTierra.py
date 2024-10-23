@@ -66,7 +66,7 @@ col1, col2 = st.columns([5,2])
 
 
 
-#################################### Lee las credenciales del archivo JSON LOCALMENTE
+#################################### Lee las credenciales del archivo JSON 
 # Obtener las credenciales desde las variables de entorno
 gcp_service_account = os.getenv('GCP_SERVICE_ACCOUNT')
 
