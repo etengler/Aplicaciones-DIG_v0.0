@@ -80,8 +80,7 @@ Map = geemap.Map(
             plugin_LatLngPopup=False,
         )
 
-# Centramos el mapa en Argentina con un zoom adecuado
-Map.setCenter(lon=-63.6167, lat=-38.4161, zoom=5)
+
     
 ################################## Variables
 global img_L
