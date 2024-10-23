@@ -409,4 +409,7 @@ with col2:
                 
                 
 with col1:
-    Map.to_streamlit()
+    if st.session_state.get('resultado_funcion_T') is not None:
+        pass
+    else:
+        Map.to_streamlit()
