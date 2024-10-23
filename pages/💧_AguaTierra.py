@@ -119,8 +119,8 @@ geometria_seleccionada = None
 global fecha_inicial
 global fecha_final
 
-global resultado_funcion
-resultado_funcion = None #Inicializar la variable para el resultado
+global resultado_funcion_AT
+resultado_funcion_AT = None #Inicializar la variable para el resultado
 
 
 #################################### RECURSOS
@@ -337,8 +337,8 @@ if data: # se ejecuta al cargar un archivo
  
     
 # Asegurarse de que session_state tiene un espacio para guardar el resultado
-if 'resultado_funcion' not in st.session_state:
-    st.session_state['resultado_funcion'] = None
+if 'resultado_funcion_AT' not in st.session_state:
+    st.session_state['resultado_funcion_AT'] = None
 
 
          
@@ -360,26 +360,26 @@ with col2:
     
 # Botón para calcular y almacenar el resultado en session_state
     if left.button("Calcular", type="primary", use_container_width=True):
-        st.session_state['resultado_funcion'] = clasificacion_agua_tierra()
+        st.session_state['resultado_funcion_AT'] = clasificacion_agua_tierra()
         #st.success("Imagen calculada y guardada")
 
 
 # Botón para descargar (solo si ya se ha calculado una imagen)
     # Botón para descargar (solo si ya se ha calculado una imagen)
     if middle.button("Descargar", type="secondary", use_container_width=True):
-        if st.session_state.get('resultado_funcion') is not None:
-            export_image(st.session_state['resultado_funcion'])
+        if st.session_state.get('resultado_funcion_AT') is not None:
+            export_image(st.session_state['resultado_funcion_AT'])
         else:
             st.warning('No hay imagen disponible para descargar.')
 
    
 
     # Mostrar el resultado si existe
-    if st.session_state['resultado_funcion'] is not None:
-        Map.addLayer(st.session_state['resultado_funcion'],{'min': 1, 'max': 2, 'palette': N1Color}, 'Resultado')
+    if st.session_state['resultado_funcion_AT'] is not None:
+        Map.addLayer(st.session_state['resultado_funcion_AT'],{'min': 1, 'max': 2, 'palette': N1Color}, 'Resultado')
         #st.write('Se ha cargado el resultado de la clasificación en el mapa 🏞️')
         st.success('Se ha cargado el resultado de la clasificación en el mapa 🏞️')
-        #st.write('result funciom', resultado_funcion.getInfo())
+        #st.write('result funciom', resultado_funcion_AT.getInfo())
         
     
 

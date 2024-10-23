@@ -94,8 +94,8 @@ timelapse_L = None
 global extencion
 extencion = None
 
-global resultado_funcion
-resultado_funcion = None #Inicializar la variable para el resultado
+global resultado_funcion_T
+resultado_funcion_T = None #Inicializar la variable para el resultado
 
 global out_gif
 out_gif = None
@@ -280,8 +280,8 @@ if data: # se ejecuta al cargar un archivo
  
     
 # Asegurarse de que session_state tiene un espacio para guardar el resultado VER
-if 'resultado_funcion' not in st.session_state:
-    st.session_state['resultado_funcion'] = None
+if 'resultado_funcion_T' not in st.session_state:
+    st.session_state['resultado_funcion_T'] = None
     
     
 # Store the initial value of widgets in session state  VER
@@ -373,7 +373,7 @@ with col2:
 
     # Botón para calcular y almacenar el resultado en session_state
     if st.button("Calcular  📷", type="primary", use_container_width=True):
-        st.session_state['resultado_funcion'] = timelapse()
+        st.session_state['resultado_funcion_T'] = timelapse()
         #st.success("Imagen calculada y guardada")
         
 
@@ -381,22 +381,22 @@ with col2:
             
         
         # Mostrar el resultado si existe
-    if st.session_state['resultado_funcion'] is not None:
+    if st.session_state['resultado_funcion_T'] is not None:
         st.success('Se ha cargado el resultado a continuación y habilitado la opción de descarga 👇')
-        st.image(st.session_state['resultado_funcion'])
+        st.image(st.session_state['resultado_funcion_T'])
         #st.write('Se ha cargado el resultado de la clasificación en el mapa 🏞️')
         #st.success('Se ha cargado el resultado de la clasificación en el mapa 🏞️')
-        #st.write('result funciom', resultado_funcion.getInfo())
+        #st.write('result funciom', resultado_funcion_T.getInfo())
 
     # Botón para descargar (solo si ya se ha calculado una imagen)
     # Botón para descargar (solo si ya se ha calculado una imagen)
     #if st.button("Descargar", type="secondary", use_container_width=True):
-    if st.session_state.get('resultado_funcion') is not None:
-        with open(st.session_state['resultado_funcion'], "rb") as file:
+    if st.session_state.get('resultado_funcion_T') is not None:
+        with open(st.session_state['resultado_funcion_T'], "rb") as file:
             st.download_button(
                     label="Descargar Timelapse GIF",
                     data=file,
-                    file_name=st.session_state['resultado_funcion'],
+                    file_name=st.session_state['resultado_funcion_T'],
                     mime="image/gif"
                 )
     else:
