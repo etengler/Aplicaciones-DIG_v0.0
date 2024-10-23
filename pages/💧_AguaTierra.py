@@ -24,6 +24,32 @@ from shapely.geometry import Polygon
 
 from google.oauth2 import service_account  # Importar la biblioteca adecuada
 
+
+#################################### Lee las credenciales del archivo JSON 
+# Obtener las credenciales desde las variables de entorno
+gcp_service_account = os.getenv('GCP_SERVICE_ACCOUNT')
+
+if gcp_service_account:
+    try:
+        # Cargar las credenciales con el alcance correcto
+        credentials = service_account.Credentials.from_service_account_info(
+            json.loads(gcp_service_account),
+            scopes=["https://www.googleapis.com/auth/earthengine"]
+        )
+        
+        # Inicializar Google Earth Engine con las credenciales
+        ee.Initialize(credentials)
+        #st.success("GEE inicializado correctamente.")
+    except json.JSONDecodeError as e:
+        st.error(f"Error al decodificar el JSON: {e}")
+    except AttributeError as e:
+        st.error(f"Error de atributo: {e}")
+    except Exception as e:
+        st.error(f"Se produjo un error: {e}")
+else:
+    st.error("No se pudo encontrar la clave del servicio. Asegúrate de que esté configurada correctamente.")
+    
+    
 ######################################## INTERFAZ VISUAL
 st.set_page_config(layout="wide")
 
@@ -66,29 +92,7 @@ col1, col2 = st.columns([5,2])
 
 
 
-#################################### Lee las credenciales del archivo JSON 
-# Obtener las credenciales desde las variables de entorno
-gcp_service_account = os.getenv('GCP_SERVICE_ACCOUNT')
 
-if gcp_service_account:
-    try:
-        # Cargar las credenciales con el alcance correcto
-        credentials = service_account.Credentials.from_service_account_info(
-            json.loads(gcp_service_account),
-            scopes=["https://www.googleapis.com/auth/earthengine"]
-        )
-        
-        # Inicializar Google Earth Engine con las credenciales
-        ee.Initialize(credentials)
-        st.success("GEE inicializado correctamente.")
-    except json.JSONDecodeError as e:
-        st.error(f"Error al decodificar el JSON: {e}")
-    except AttributeError as e:
-        st.error(f"Error de atributo: {e}")
-    except Exception as e:
-        st.error(f"Se produjo un error: {e}")
-else:
-    st.error("No se pudo encontrar la clave del servicio. Asegúrate de que esté configurada correctamente.")
 
 
 

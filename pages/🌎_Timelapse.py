@@ -60,7 +60,7 @@ if gcp_service_account:
         
         # Inicializar Google Earth Engine con las credenciales
         ee.Initialize(credentials)
-        st.success("GEE inicializado correctamente.")
+        #st.success("GEE inicializado correctamente.")
     except json.JSONDecodeError as e:
         st.error(f"Error al decodificar el JSON: {e}")
     except AttributeError as e:
