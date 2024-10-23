@@ -11,19 +11,33 @@ import os
 import uuid
 import geemap as gm
 
+from google.oauth2 import service_account  # Importar la biblioteca adecuada
 
-#################################### Lee las credenciales del archivo JSON LOCALMENTE
-ruta_archivo = "C:/Users/etengler/Downloads/ee-dig-aplicaciones-774222ef12fc.json"
-with open(ruta_archivo, 'r') as archivo_json:
-    credenciales = json.load(archivo_json)
 
-# Autenticación usando las credenciales en formato JSON
-credentials = ee.ServiceAccountCredentials(credenciales['client_email'], ruta_archivo)
-try:
-    ee.Initialize(credentials)
-    #st.write("Earth Engine se ha inicializado correctamente")
-except:
-    st.error("Error inicializando Earth Engine")
+#################################### Lee las credenciales del archivo JSON 
+# Obtener las credenciales desde las variables de entorno
+gcp_service_account = os.getenv('GCP_SERVICE_ACCOUNT')
+
+if gcp_service_account:
+    try:
+        # Cargar las credenciales con el alcance correcto
+        credentials = service_account.Credentials.from_service_account_info(
+            json.loads(gcp_service_account),
+            scopes=["https://www.googleapis.com/auth/earthengine"]
+        )
+        
+        # Inicializar Google Earth Engine con las credenciales
+        ee.Initialize(credentials)
+        st.success("GEE inicializado correctamente.")
+    except json.JSONDecodeError as e:
+        st.error(f"Error al decodificar el JSON: {e}")
+    except AttributeError as e:
+        st.error(f"Error de atributo: {e}")
+    except Exception as e:
+        st.error(f"Se produjo un error: {e}")
+else:
+    st.error("No se pudo encontrar la clave del servicio. Asegúrate de que esté configurada correctamente.")
+
     
 
     
