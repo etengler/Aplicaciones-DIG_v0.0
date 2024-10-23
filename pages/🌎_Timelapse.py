@@ -80,7 +80,8 @@ Map = geemap.Map(
             plugin_LatLngPopup=False,
         )
 
-
+# Centramos el mapa en Argentina con un zoom adecuado
+Map.setCenter(lon=-63.6167, lat=-38.4161, zoom=5)
     
 ################################## Variables
 global img_L
@@ -404,12 +405,7 @@ with col2:
         pass
 
             
-            
-    
-                
+                          
                 
 with col1:
-    if st.session_state.get('resultado_funcion_T') is not None:
-        pass
-    else:
-        Map.to_streamlit()
+    Map.to_streamlit()
