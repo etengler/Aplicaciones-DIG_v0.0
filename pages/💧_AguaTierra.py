@@ -24,6 +24,7 @@ from shapely.geometry import Polygon
 
 from google.oauth2 import service_account  # Importar la biblioteca adecuada
 
+import folium
 
 #################################### Lee las credenciales del archivo JSON 
 # Obtener las credenciales desde las variables de entorno
@@ -53,57 +54,53 @@ else:
 ######################################## INTERFAZ VISUAL
 st.set_page_config(layout="wide")
 
+#st.sidebar.title("Detección Agua-Tierra")
 
-st.sidebar.title("Detección Agua-Tierra")
+#texto1_side = """
+#Esta herramienta permite hacer una distinción entre el entorno marino-fluvial y terrestre a partir de seleccionar un área de interés y un período.
+#"""
 
-texto1_side = """
-Esta herramienta permite hacer una distinción entre el entorno marino-fluvial y terrestre a partir de seleccionar un área de interés y un período.
-"""
-texto_side_pasos = """
-1- Seleccionar un área de estudio. 
-    Opciones:
-        - Dibujar en el mapa una geometría, exportarla mediante **Export** y luego subirla con la herramienta **Browse files**.
-        - Directamente subir una geometría en formato geojson, kml o zip.
-        
-2- Seleccionar un rango de fechas para obtener las imágenes con el que se realizará el cálculo Agua-Tierra.
+#st.sidebar.info(texto1_side)
+#st.sidebar.markdown("""---""")
 
-"""
-
-st.sidebar.info(texto1_side)
-st.sidebar.markdown("""---""")
-# st.sidebar.subheader("Instrucciones:")
-# st.sidebar.markdown("1- Seleccionar un área de estudio. ")
-# st.sidebar.markdown("Opciones:")
-# st.sidebar.markdown("- Dibujar en el mapa una geometría, exportarla mediante **Export** y luego subirla con la herramienta **Browse files**.")
-# st.sidebar.markdown("- Directamente subir una geometría en formato geojson, kml o zip.")
-# st.sidebar.markdown("2- Seleccionar un rango de fechas para obtener las imágenes con el que se realizará el cálculo Agua-Tierra.")
-# st.sidebar.markdown("3- Calcular! 💧")
-# st.sidebar.markdown("4- El resultado puede ser descargado. Tener en cuenta que la extención no sea demasiado grande!")
 
 st.title("Aplicación Agua-Tierra")
-st.markdown("Este algoritmo fue consruido en el entorno de Google Earth Engine a partir de imágenes **SENTINEL-2A/B MSI Nivel 1C** para el primer trimestre del 2023, el **Índice de Diferencia Normalizada de Agua** (NDWI), un DEM, **puntos de muestreo** y el algoritmo de **distancia mínima**.")
+st.markdown("Esta aplicación nos permite realizar una clasificación que discrimine en agua y tierra (o no agua) de un área de nuestro interés para un periodo de tiempo que establezcamos. El algoritmo que se utiliza para clasificar está basado en el trabajo 'Detección del límite agua-tierra mediante el algoritmo mínima distancia en la nube de Google Earth Engine' (Dieguez Gaviola, G, et. al., 2023).")
+st.markdown("""---""")
 
 data = st.file_uploader(
-            "Cargue un archivo **GeoJSON**, **kml** o **zip** para usarlo como ROI 👇",
+            "Cargue un archivo **GeoJSON**, **kml** o **SHP** (en formato ZIP) para usarlo como área de interés 👇",
             type=["geojson", "kml", "zip"],
         )
 
-col1, col2 = st.columns([5,2]) 
 
-
-
-
-
+col1, col_medio, col2 = st.columns([4,0.15,3]) #3 columnas principales
 
 
 ################################## Mapa Basee
 Map = geemap.Map(
             basemap="HYBRID",
+            #basemap=None,  # No usar basemap por defecto
             plugin_Draw=True,
             Draw_export=True,
             locate_control=True,
             plugin_LatLngPopup=False,
+            center=[-38.4161, -63.6167],  # Coordenadas para centrar el mapa
+            zoom=4  # Nivel de zoom inicial
         )
+
+# Agregar la capa TMS personalizada
+tms_url = "https://wms.ign.gob.ar/geoserver/gwc/service/tms/1.0.0/capabaseargenmap@EPSG%3A3857@png/{z}/{x}/{-y}.png"
+tms_layer = folium.TileLayer(
+    tiles=tms_url,
+    attr="IGN",
+    name="ArgenMap",
+    overlay=False,
+    control=True
+)
+
+tms_layer.add_to(Map)
+
 
 
 #################################### VARIABLES GLOBALES
@@ -121,6 +118,14 @@ global fecha_final
 
 global resultado_funcion_AT
 resultado_funcion_AT = None #Inicializar la variable para el resultado
+
+
+# Inicializar el estado del mensaje si no está definido
+if 'message_type' not in st.session_state:
+    st.session_state['message_type'] = None  # Puede ser 'success', 'error', 'warning'
+if 'message_content' not in st.session_state:
+    st.session_state['message_content'] = ''
+    
 
 
 #################################### RECURSOS
@@ -199,7 +204,10 @@ def obtenerFecha():
 
     # Verificar si la diferencia es negativa
     if diferencia.getInfo() >= 0:
-        st.warning('La fecha final no puede ser mayor o igual que la fecha inicial')
+        st.session_state['message_type'] = 'warning'
+        st.session_state['message_content'] = "La fecha final no puede ser mayor o igual que la fecha inicial"
+        
+        #st.warning('La fecha final no puede ser mayor o igual que la fecha inicial')#
         return None  # Devuelve None si hay un error
     else:
         return (fecha_inicio_ee, fecha_fin_ee)  # Devuelve fechas como objetos ee.Date
@@ -245,25 +253,29 @@ def export_image(image):
         # Generar la URL de descarga
         url = image.getDownloadURL({
             'name': 'imagen_exportada',  # Cambia esto a un nombre de archivo válido
-            'scale': 10,  # Ajusta la escala según tus necesidades
+            'scale': 30,  # Ajusta la escala según tus necesidades
             'crs': 'EPSG:4674',  # Asegúrate de que este CRS sea el que deseas
             'region': region,  # Obtener la geometría como un GeoJSON
             'format': 'GEO_TIFF'  # Asegúrate de que este formato sea válido
         })
         
         # Mostrar el enlace de descarga
-        st.success("Imagen lista para descargar.")
-        st.markdown(f"[Descargar imagen en formato GeoTIFF]({url})")
+        st.session_state['message_type'] = 'success'
+        st.session_state['message_content'] = f"[Click aquí para DESCARGAR la imagen en formato GeoTIFF]({url})"
+
+        
+        #placeholder.success("Imagen lista para descargar.")
+        #st.markdown(f"[Descargar imagen en formato GeoTIFF]({url})")
 
     except Exception as e:
         #st.error(f"Error al exportar la imagen: {str(e)}")
-        st.error(f"Error al exportar la imagen: Por favor, elija una área mas pequeña.")
+        st.session_state['message_type'] = 'error'
+        st.session_state['message_content'] = "Error al exportar la imagen. Por favor, elija una área más pequeña."
 
 
 
 #Funcion principal
 def clasificacion_agua_tierra():
-    st.write('Espere mientras se clasifica ⌛⌛⌛')
     global extencion
     global classified_b
 
@@ -283,6 +295,7 @@ def clasificacion_agua_tierra():
             #st.write(f"Fecha inicio: {fecha[0].getInfo()}, Fecha fin: {fecha[1].getInfo()}")
 
             try:
+                #placeholder.write('Espere mientras se clasifica ⌛⌛⌛')
                 s2_b = ee.ImageCollection("COPERNICUS/S2_HARMONIZED") \
                     .filterDate(fecha[0], fecha[1]) \
                     .filterBounds(roi) \
@@ -318,7 +331,7 @@ def clasificacion_agua_tierra():
             
             except ee.EEException as e:
                 st.write('Por favor, elija otro rango de fechas o área. Es posible que no haya datos válidos para ese período')
-
+            
     return classified_b
 
 
@@ -330,9 +343,16 @@ if data: # se ejecuta al cargar un archivo
     try:
         st.session_state["roi"] = geemap.gdf_to_ee(extencion, geodesic=False)
         Map.add_gdf(extencion, "ROI")
+        # Restablecer mensaje de error (si lo hubiera) y mostrar el éxito
+        st.session_state['message_type'] = None
+        st.session_state['message_content'] = ""
+        
     except Exception as e:
-        st.error(e)
-        st.error("Dibuje otra área inténtelo de nuevo.")
+        st.session_state['resultado_funcion_AT'] = None
+        #st.error(e)
+        st.session_state['message_type'] = 'error'
+        st.session_state['message_content'] = "Dibuje otra área inténtelo de nuevo."
+        #st.error("Dibuje otra área inténtelo de nuevo.")
  
  
     
@@ -346,42 +366,63 @@ with col2:
     #selected_value = st.selectbox('Selecciona una carta: ', valoresCarac)
     #fecha_inicial = st.date_input('Fecha inicial:', datetime.date(2020, 1, 1))
     
-    #st.markdown("""---""")
+    st.markdown(" ")
     st.subheader("Instrucciones:")
     st.markdown("1- Seleccionar un área de estudio. Opciones: ")
-    st.markdown("- Dibujar en el mapa una geometría, exportarla mediante **Export** y luego subirla con la herramienta **Browse files**.")
-    st.markdown("- Directamente subir una geometría en formato geojson, kml o zip.")
+    st.markdown("- Dibujar en el mapa una geometría (rectángulo o plígono), exportarla mediante **Export** y luego subirla con la herramienta **Browse files**.")
+    st.markdown("- Directamente subir una geometría en formato geojson, kml o shp (zip).")
     st.markdown("2- Seleccionar un rango de fechas:")
-    fecha_inicial = st.date_input('Fecha inicial:', datetime.date(2023, 10, 1))
-    fecha_final = st.date_input('Fecha final:')
-    st.markdown("3- Calcular! 💧")
-    st.markdown("4- El resultado puede ser descargado. Tener en cuenta que la extención no sea demasiado grande!")
+   
+    fech1, fec2 = st.columns(2)   
+    fecha_inicial = fech1.date_input('Fecha inicial:', datetime.date(2023, 10, 1))
+    fecha_final = fec2.date_input('Fecha final:')
+   
+    st.markdown("3- Calcular!")
+    st.markdown("4- El resultado puede ser descargado.")
     left, middle = st.columns(2)
     
 # Botón para calcular y almacenar el resultado en session_state
-    if left.button("Calcular", type="primary", use_container_width=True):
-        st.session_state['resultado_funcion_AT'] = clasificacion_agua_tierra()
+    if left.button("Calcular 💧", type="primary", use_container_width=True):
+        try:
+            st.session_state['resultado_funcion_AT'] = clasificacion_agua_tierra()
+            
+            # Mostrar el resultado si existe
+            if st.session_state['resultado_funcion_AT'] is not None:
+                Map.addLayer(st.session_state['resultado_funcion_AT'],{'min': 1, 'max': 2, 'palette': N1Color}, 'Resultado')
+        #st.write('Se ha cargado el resultado de la clasificación en el mapa 🏞️')
+        # Actualizar el estado con un mensaje de éxito
+                st.session_state['message_type'] = 'success'
+                st.session_state['message_content'] = 'Se ha cargado el resultado de la clasificación en el mapa 🏞️'
+        #st.write('result funciom', resultado_funcion_AT.getInfo())
+            
+        except:
+            st.session_state['message_type'] = 'error'
+            st.session_state['message_content'] = 'Elija otro período. Es posible que no haya datos válidos para ese período'
+        
+            
         #st.success("Imagen calculada y guardada")
 
 
 # Botón para descargar (solo si ya se ha calculado una imagen)
     # Botón para descargar (solo si ya se ha calculado una imagen)
-    if middle.button("Descargar", type="secondary", use_container_width=True):
+    if middle.button("Generar Link de descarga", type="secondary", use_container_width=True):
         if st.session_state.get('resultado_funcion_AT') is not None:
             export_image(st.session_state['resultado_funcion_AT'])
         else:
             st.warning('No hay imagen disponible para descargar.')
 
    
-
-    # Mostrar el resultado si existe
-    if st.session_state['resultado_funcion_AT'] is not None:
-        Map.addLayer(st.session_state['resultado_funcion_AT'],{'min': 1, 'max': 2, 'palette': N1Color}, 'Resultado')
-        #st.write('Se ha cargado el resultado de la clasificación en el mapa 🏞️')
-        st.success('Se ha cargado el resultado de la clasificación en el mapa 🏞️')
-        #st.write('result funciom', resultado_funcion_AT.getInfo())
-        
+    # Placeholder para mensajes de la clasificación
+    placeholder = st.empty()
     
+        
+    # Control de qué mensaje mostrar según el estado actual
+    if st.session_state['message_type'] == 'success':
+        placeholder.success(st.session_state['message_content'])
+    elif st.session_state['message_type'] == 'error':
+        placeholder.error(st.session_state['message_content'])
+    elif st.session_state['message_type'] == 'warning':
+        placeholder.warning(st.session_state['message_content'])
 
 #if selected_value is not None:  # Evitar el procesamiento si se selecciona la opción nula
 #    geometria_seleccionada = cartas.filter(ee.Filter.eq("carac", selected_value))

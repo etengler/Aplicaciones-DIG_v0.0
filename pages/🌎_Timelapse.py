@@ -12,38 +12,7 @@ import uuid
 import geemap as gm
 
 from google.oauth2 import service_account  # Importar la biblioteca adecuada
-
-
-
-
-    
-
-    
-######################################## INTERFAZ VISUAL
-st.set_page_config(layout="wide")
-
-st.sidebar.title("Timelapse")
-
-texto1_side = """
-Esta herramienta permite generar un TIMELAPSE, en formato .gif o .mp4, de una región y un período en particular a partir de imágenes Landsat.
-"""
-st.sidebar.info(texto1_side)
-
-st.sidebar.markdown("""---""")
-
-
-st.title("Aplicación Timelapse")
-#st.markdown("Con la selección de ciertos parámetros podrás generar un archivo en formato .gif o .mp4 que es posible descargar.")
-st.markdown("Este algoritmo utiliza librerías de código abierto como GeeMap que consume Google Earth Engine (GEE) para procesar y generar imágenes satelitales. El proceso de selección de las imágenes del timelapse se basa en tomar la primera de cada año que cumpla con los parámetros de calidad.")
-st.markdown("""---""")
-
-data = st.file_uploader(
-            "Cargue un archivo **GeoJSON**, **kml** o **zip** para usarlo como ROI 👇",
-            type=["geojson", "kml", "zip"],
-)
-
-
-col1, colo_medio, col2 = st.columns([5,0.3,3]) #3 columnas principales
+import folium
 
 
 #################################### Lee las credenciales del archivo JSON 
@@ -70,23 +39,62 @@ if gcp_service_account:
 else:
     st.error("No se pudo encontrar la clave del servicio. Asegúrate de que esté configurada correctamente.")
     
+
+    
+######################################## INTERFAZ VISUAL
+st.set_page_config(layout="wide")
+
+# st.sidebar.title("Timelapse")
+
+# texto1_side = """
+# Esta herramienta permite generar un TIMELAPSE, en formato .gif, de una región y un período en particular a partir de imágenes Landsat.
+# """
+# st.sidebar.info(texto1_side)
+# st.sidebar.markdown("""---""")
+
+
+st.title("Aplicación Timelapse")
+st.markdown("Este algoritmo utiliza librerías de código abierto como GeeMap que consume Google Earth Engine (GEE) para procesar y generar imágenes satelitales. El proceso de selección de las imágenes se basa en tomar la primer imagen Landsat de cada año que cumpla con los parámetros de calidad.")
+st.markdown("""---""")
+
+
+data_timelapse = st.file_uploader(
+            "Cargue un archivo **GeoJSON**, **kml** o **SHP** (en formato ZIP) para usarlo como área de interés 👇",
+            type=["geojson", "kml", "zip"],
+    )
+
+col1, col_medio, col2 = st.columns([5,0.15,3]) #3 columnas principales
+
     
 ################################## Mapa Base
 Map = geemap.Map(
             basemap="HYBRID",
+            #basemap=None,  # No usar basemap por defecto
             plugin_Draw=True,
             Draw_export=True,
             locate_control=True,
             plugin_LatLngPopup=False,
+            center=[-38.4161, -63.6167],  # Coordenadas para centrar el mapa
+            zoom=4  # Nivel de zoom inicial
         )
 
+# Agregar la capa TMS personalizada
+tms_url = "https://wms.ign.gob.ar/geoserver/gwc/service/tms/1.0.0/capabaseargenmap@EPSG%3A3857@png/{z}/{x}/{-y}.png"
+tms_layer = folium.TileLayer(
+    tiles=tms_url,
+    attr="IGN",
+    name="ArgenMap",
+    overlay=False,
+    control=True
+)
 
-    
+tms_layer.add_to(Map)
+   
 ################################## Variables
-global img_L
-img_L= None
+#global img_L
+#img_L= None
 
-img_S = None
+#img_S = None
 
 global timelapse_L
 timelapse_L = None
@@ -100,11 +108,19 @@ resultado_funcion_T = None #Inicializar la variable para el resultado
 global out_gif
 out_gif = None
 
+
+################################## 
+# Inicializar el estado del mensaje si no está definido
+if 'message_type' not in st.session_state:
+    st.session_state['message_type'] = None  # Puede ser 'success', 'error', 'warning'
+if 'message_content' not in st.session_state:
+    st.session_state['message_content'] = ''
+    
+
 #################################### FUNCIONES
 def timelapse():
     
-    st.write('Espere mientras se clasifica ⌛⌛⌛')
-    #st.success('Espere mientras se clasifica ⌛⌛⌛')
+    #st.write('Espere mientras se clasifica ⌛⌛⌛')
     global timelapse_L
     global extencion
     
@@ -144,16 +160,19 @@ def timelapse():
     #st.write('control 1')   
     
     if extencion is None:
-        st.write('Por favor, dibuje un poligono en el mapa ✏️') # controlar extencion adentro o fuera??
+        #st.write('Por favor, dibuje un poligono en el mapa ✏️') # controlar extencion adentro o fuera??
+        st.session_state['message_type'] = 'warning'
+        st.session_state['message_content'] = "Por favor, dibuje un poligono en el mapa ✏️"
         
+        out_gif = None
     else:
         roi = None
         if st.session_state.get("roi") is not None:
             roi = st.session_state.get("roi")
             
     #st.write('aca empieza')     
-    try:
-        timelapse_L = geemap.landsat_timelapse(
+        try:
+            timelapse_L = geemap.landsat_timelapse(
                 roi=roi,
                 out_gif=out_gif, 
                 start_year=anios[0], 
@@ -180,31 +199,14 @@ def timelapse():
         # else:
         #     st.error("No se pudo generar el timelapse. Inténtalo nuevamente.")
             
-    except FileNotFoundError:
-        print("Error: No se pudo encontrar el archivo de imagen GIF. Por favor, intenta nuevamente más tarde.")
+        except FileNotFoundError:
+            print("Error: No se pudo encontrar el archivo de imagen GIF. Por favor, intenta nuevamente más tarde.")
         
-    except Exception as e:
-        print("Error inesperado:", e)
-    
-    
+        except Exception as e:
+            print("Error inesperado:", e)
     
 
-            
-    # if checkBox_descarga_gif:
-    #     # Obtener la ruta actual del directorio de trabajo
-    #     ruta_proyecto = os.getcwd()
-    #     st.write(f'LA DESCARGA SE ENCUENTRA EN: {ruta_proyecto}\{out_gif}')
-    # else:
-    #     pass
-        
-
-    # if checkBox_descarga_video:
-    #     # Obtener la ruta actual del directorio de trabajo
-    #     ruta_proyecto = os.getcwd()
-    #     st.write(f'LA DESCARGA SE ENCUENTRA EN: {ruta_proyecto}\{nombre_gif}.mp4')
-    # else:
-    #     pass
-                
+    extencion  = None            
     return out_gif        
             
             
@@ -231,7 +233,10 @@ def obtenerFecha():
 
     # Verificar si la diferencia es negativa
     if diferencia.getInfo() >= 0:
-        st.warning('La fecha final no puede ser mayor o igual que la fecha inicial')
+        #st.warning('La fecha final no puede ser mayor o igual que la fecha inicial')
+        st.session_state['message_type'] = 'warning'
+        st.session_state['message_content'] = "La fecha final no puede ser mayor o igual que la fecha inicial"
+        
         return None  # Devuelve None si hay un error
     else:
         return (fecha_inicio_ee, fecha_fin_ee)  # Devuelve fechas como objetos ee.Date
@@ -248,13 +253,13 @@ def gdf_to_ee_geometry(gdf):
 
 
 @st.cache_data
-def uploaded_file_to_gdf(data):
-    _, file_extension = os.path.splitext(data.name)
+def uploaded_file_to_gdf(data_timelapse):
+    _, file_extension = os.path.splitext(data_timelapse.name)
     file_id = str(uuid.uuid4())
     file_path = os.path.join(tempfile.gettempdir(), f"{file_id}{file_extension}")
 
     with open(file_path, "wb") as file:
-        file.write(data.getbuffer())
+        file.write(data_timelapse.getbuffer())
 
     if file_path.lower().endswith(".kml"):
         fiona.drvsupport.supported_drivers["KML"] = "rw"
@@ -268,14 +273,17 @@ def uploaded_file_to_gdf(data):
 
 
 #################################### main
-if data: # se ejecuta al cargar un archivo 
-    extencion = uploaded_file_to_gdf(data)
+if data_timelapse: # se ejecuta al cargar un archivo 
+    extencion = uploaded_file_to_gdf(data_timelapse)
     try:
         st.session_state["roi"] = geemap.gdf_to_ee(extencion, geodesic=False)
         Map.add_gdf(extencion, "ROI")
     except Exception as e:
-        st.error(e)
-        st.error("Dibuje otra área inténtelo de nuevo.")
+        #st.error(e)
+        #st.error("Dibuje otra área inténtelo de nuevo.")
+        st.session_state['message_type'] = 'error'
+        st.session_state['message_content'] = "Dibuje otra área inténtelo de nuevo."
+        
  
  
     
@@ -304,12 +312,22 @@ opciones_bandas = {
         'Índice de vegetación mejorado (EVI)': 'SWIR1/NIR/Red'
     }
     
-        
+  
+
+          
 with col2:
-    st.markdown("Complete los parámetros para generar el Timelpase con imágenes Landsat:")
+    st.subheader("Instrucciones:")
+    st.markdown("1- Seleccionar un área de estudio. Opciones: ")
+    st.markdown("- Dibujar en el mapa una geometría (rectángulo o plígono), exportarla mediante **Export** y luego subirla con la herramienta **Browse files**.")
+    st.markdown("- Directamente subir una geometría en formato geojson, kml o shp (zip).")
+    
+
+    
+    #st.markdown("Elija un área y complete los parámetros para generar el Timelpase con imágenes Landsat:")
     
     #colA, colB = st.columns([3,3]) 
     
+    st.markdown("2- Completar parámetros: ")
     
     bandas = st.selectbox(
     "**Combinación de bandas:**",
@@ -328,7 +346,7 @@ with col2:
     meses = middle.slider("Período mensual: ", 1, 12, (1, 4))
     
     #st.divider()
-    st.markdown("**Estilo:**")
+    #st.markdown("**Estilo:**")
     
     titulo = st.text_input(
         "Título: ",
@@ -376,13 +394,20 @@ with col2:
         st.session_state['resultado_funcion_T'] = timelapse()
         #st.success("Imagen calculada y guardada")
         
-
-            
-            
+        #st.session_state['message_type'] = 'success'
+        #st.session_state['message_content'] = 'Se ha cargado el resultado a continuación y habilitado la opción de descarga 👇'
+        
+        
+    # Placeholder para mensajes de la clasificación
+    placeholder = st.empty()
+                  
         
         # Mostrar el resultado si existe
     if st.session_state['resultado_funcion_T'] is not None:
-        st.success('Se ha cargado el resultado a continuación y habilitado la opción de descarga 👇')
+        st.session_state['message_type'] = 'success'
+        st.session_state['message_content'] = 'Se cargó el resultado a continuación y habilitó la opción de descarga 👇'
+        
+    
         st.image(st.session_state['resultado_funcion_T'])
         #st.write('Se ha cargado el resultado de la clasificación en el mapa 🏞️')
         #st.success('Se ha cargado el resultado de la clasificación en el mapa 🏞️')
@@ -394,17 +419,28 @@ with col2:
     if st.session_state.get('resultado_funcion_T') is not None:
         with open(st.session_state['resultado_funcion_T'], "rb") as file:
             st.download_button(
-                    label="Descargar Timelapse GIF",
+                    label="Descargar Timelapse en formato GIF",
                     data=file,
-                    file_name=st.session_state['resultado_funcion_T'],
+                    #file_name=st.session_state['resultado_funcion_T'],
+                    file_name=f'timelapse_{anios[0]}-{anios[1]}.gif',
                     mime="image/gif"
                 )
     else:
         #st.warning('No hay imagen disponible para descargar.')
         pass
 
+    # Control de qué mensaje mostrar según el estado actual
+    if st.session_state['message_type'] == 'success':
+        placeholder.success(st.session_state['message_content'])
+    elif st.session_state['message_type'] == 'error':
+        placeholder.error(st.session_state['message_content'])
+    elif st.session_state['message_type'] == 'warning':
+        placeholder.warning(st.session_state['message_content'])
+    
+        
+with col1:      
+    #Map.to_streamlit() 
+    Map.to_streamlit(height=750)  
             
                           
                 
-with col1:
-    Map.to_streamlit()
