@@ -64,8 +64,8 @@ st.set_page_config(layout="wide")
 #st.sidebar.markdown("""---""")
 
 
-st.title("Aplicación Agua-Tierra")
-st.markdown("Esta aplicación nos permite realizar una clasificación que discrimine en agua y tierra (o no agua) de un área de nuestro interés para un periodo de tiempo que establezcamos. El algoritmo que se utiliza para clasificar está basado en el trabajo 'Detección del límite agua-tierra mediante el algoritmo mínima distancia en la nube de Google Earth Engine' (Dieguez Gaviola, G, et. al., 2023).")
+st.title("Aplicación Agua-NoAgua")
+st.markdown("Esta aplicación nos permite realizar una clasificación que discrimine en agua y no agua de un área de nuestro interés para un periodo de tiempo que establezcamos. El algoritmo que se utiliza para clasificar está basado en el trabajo 'Detección del límite agua-tierra mediante el algoritmo mínima distancia en la nube de Google Earth Engine' (Dieguez Gaviola, G, et. al., 2023).")
 st.markdown("""---""")
 
 data = st.file_uploader(
@@ -247,6 +247,7 @@ def descargarRaster():
 
 def export_image(image):
     try:
+        Map.addLayer(st.session_state['resultado_funcion_AT'],{'min': 1, 'max': 2, 'palette': N1Color}, 'Resultado')
         # Obtener la geometría de la imagen o de la región seleccionada
         region = image.geometry().getInfo() if st.session_state['roi'] is None else st.session_state['roi'].geometry().getInfo()
 
