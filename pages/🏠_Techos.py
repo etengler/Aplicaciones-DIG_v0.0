@@ -17,11 +17,25 @@ gcp_service_account = os.getenv('GCP_SERVICE_ACCOUNT')
 
 if gcp_service_account:
     st.write("✅ GCP_SERVICE_ACCOUNT cargada correctamente")
+
     try:
         service_account_info = json.loads(gcp_service_account)
-        st.write(f"🔍 Proyecto detectado: {service_account_info.get('project_id', 'No encontrado')}")
-    except json.JSONDecodeError as e:
-        st.error(f"❌ Error al decodificar JSON: {e}")
+        project_id = service_account_info.get("project_id", "No encontrado")
+        st.write(f"🔍 Proyecto detectado: {project_id}")
+
+        # Carga credenciales
+        credentials = service_account.Credentials.from_service_account_info(
+            service_account_info,
+            scopes=["https://www.googleapis.com/auth/earthengine"]
+        )
+
+        # 🔹 VERIFICACIÓN EXTRA
+        st.write("⚡ Intentando inicializar GEE...")
+        ee.Initialize(credentials, project=project_id)
+        st.write("🚀 GEE inicializado con éxito!")
+
+    except Exception as e:
+        st.error(f"❌ Error al inicializar GEE: {e}")
 else:
     st.error("❌ No se encontró GCP_SERVICE_ACCOUNT en las variables de entorno.")
 
