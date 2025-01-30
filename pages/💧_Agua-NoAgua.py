@@ -1,12 +1,10 @@
 import streamlit as st
-#import geemap
 import geemap.foliumap as geemap
-#import geemap.colormaps as cm
+
 import ee
 import os
 import json
 import datetime
-#import leafmap.foliumap as leafmap
 
 import fiona
 import geopandas as gpd
@@ -15,16 +13,10 @@ import tempfile
 import os
 import uuid
 
-import requests
-import time
-import pyogrio
 import folium
-import warnings
-from shapely.geometry import Polygon
 
 from google.oauth2 import service_account  # Importar la biblioteca adecuada
 
-import folium
 
 #################################### Lee las credenciales del archivo JSON 
 # Obtener las credenciales desde las variables de entorno
@@ -74,7 +66,7 @@ data = st.file_uploader(
         )
 
 
-col1, col_medio, col2 = st.columns([4,0.15,3]) #3 columnas principales
+col1, col_medio, col2 = st.columns([5,0.15,3])  #3 columnas principales
 
 
 ################################## Mapa Basee
