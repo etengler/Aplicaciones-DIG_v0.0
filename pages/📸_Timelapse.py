@@ -3,15 +3,19 @@ import geemap.foliumap as geemap
 import ee
 import os
 import json
+import datetime
 import fiona
 import geopandas as gpd
 import tempfile
 import os
 import uuid
+import geemap as gm
 
 from google.oauth2 import service_account  # Importar la biblioteca adecuada
 import folium
 
+######################################## INTERFAZ VISUAL
+st.set_page_config(layout="wide")
 
 #################################### Lee las credenciales del archivo JSON 
 # Obtener las credenciales desde las variables de entorno
@@ -39,8 +43,7 @@ else:
     
 
     
-######################################## INTERFAZ VISUAL
-st.set_page_config(layout="wide")
+
 
 # st.sidebar.title("Timelapse")
 
@@ -89,6 +92,11 @@ tms_layer = folium.TileLayer(
 tms_layer.add_to(Map)
    
 ################################## Variables
+#global img_L
+#img_L= None
+
+#img_S = None
+
 global timelapse_L
 timelapse_L = None
 

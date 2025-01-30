@@ -17,6 +17,8 @@ import folium
 
 from google.oauth2 import service_account  # Importar la biblioteca adecuada
 
+######################################## INTERFAZ VISUAL
+st.set_page_config(layout="wide")
 
 #################################### Lee las credenciales del archivo JSON 
 # Obtener las credenciales desde las variables de entorno
@@ -43,9 +45,8 @@ else:
     st.error("No se pudo encontrar la clave del servicio. Asegúrate de que esté configurada correctamente.")
     
     
-######################################## INTERFAZ VISUAL
-st.set_page_config(layout="wide")
 
+##############
 #st.sidebar.title("Detección Agua-Tierra")
 
 #texto1_side = """
