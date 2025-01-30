@@ -16,12 +16,12 @@ st.set_page_config(layout="wide")
 gcp_service_account = os.getenv('GCP_SERVICE_ACCOUNT')
 
 if gcp_service_account:
-    st.write("✅ GCP_SERVICE_ACCOUNT cargada correctamente")
+    #st.write("✅ GCP_SERVICE_ACCOUNT cargada correctamente")
 
     try:
         service_account_info = json.loads(gcp_service_account)
         project_id = service_account_info.get("project_id", "No encontrado")
-        st.write(f"🔍 Proyecto detectado: {project_id}")
+        #st.write(f"🔍 Proyecto detectado: {project_id}")
 
         # Carga credenciales
         credentials = service_account.Credentials.from_service_account_info(
@@ -30,9 +30,9 @@ if gcp_service_account:
         )
 
         # 🔹 VERIFICACIÓN EXTRA
-        st.write("⚡ Intentando inicializar GEE...")
+        #st.write("⚡ Intentando inicializar GEE...")
         ee.Initialize(credentials, project=project_id)
-        st.write("🚀 GEE inicializado con éxito!")
+        #st.write("🚀 GEE inicializado con éxito!")
 
     except Exception as e:
         st.error(f"❌ Error al inicializar GEE: {e}")

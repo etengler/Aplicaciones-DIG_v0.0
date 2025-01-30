@@ -21,28 +21,31 @@ from google.oauth2 import service_account  # Importar la biblioteca adecuada
 st.set_page_config(layout="wide")
 
 #################################### Lee las credenciales del archivo JSON 
-# Obtener las credenciales desde las variables de entorno
 gcp_service_account = os.getenv('GCP_SERVICE_ACCOUNT')
 
 if gcp_service_account:
+    #st.write("✅ GCP_SERVICE_ACCOUNT cargada correctamente")
+
     try:
-        # Cargar las credenciales con el alcance correcto
+        service_account_info = json.loads(gcp_service_account)
+        project_id = service_account_info.get("project_id", "No encontrado")
+        #st.write(f"🔍 Proyecto detectado: {project_id}")
+
+        # Carga credenciales
         credentials = service_account.Credentials.from_service_account_info(
-            json.loads(gcp_service_account),
+            service_account_info,
             scopes=["https://www.googleapis.com/auth/earthengine"]
         )
-        
-        # Inicializar Google Earth Engine con las credenciales
-        ee.Initialize(credentials)
-        #st.success("GEE inicializado correctamente.")
-    except json.JSONDecodeError as e:
-        st.error(f"Error al decodificar el JSON: {e}")
-    except AttributeError as e:
-        st.error(f"Error de atributo: {e}")
+
+        # 🔹 VERIFICACIÓN EXTRA
+        #st.write("⚡ Intentando inicializar GEE...")
+        ee.Initialize(credentials, project=project_id)
+        #st.write("🚀 GEE inicializado con éxito!")
+
     except Exception as e:
-        st.error(f"Se produjo un error: {e}")
+        st.error(f"❌ Error al inicializar GEE: {e}")
 else:
-    st.error("No se pudo encontrar la clave del servicio. Asegúrate de que esté configurada correctamente.")
+    st.error("❌ No se encontró GCP_SERVICE_ACCOUNT en las variables de entorno.")
     
     
 
